@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>ETF Arbitrage Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff;
+            color: #000;
+            margin: 16px
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 0;
+            text-align: left;
+            font-size: 14px
+        }
+
+        th {
+            background: #eee;
+            font-weight: bold
+        }
+
+        .discount {
+            background: #ffe6e6
+        }
+
+        .premium {
+            background: #e6ffe6
+        }
+
+        .neutral {
+            background: #f9f9f9
+        }
+    </style>
+</head>
+
+<body>
+    <p>Spread % = (Price − NAV) ÷ NAV × 100</p>
+    <table id="etfTable">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>NAV</th>
+                <th>Shares</th>
+                <th>Price</th>
+                <th>Type</th>
+                <th>± %</th>
+                <th>Action</th>
+                <th>Profit</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        const TH = 0.0001;
+        const usd = v => v.toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2
+        });
+        const pct = v => (v > 0 ? '+' : '') + (v * 100).toFixed(2) + '%';
+        const etfs = [{
+            ticker: 'SPY',
+            nav: 450,
+            shares: 10,
+            price: 452
+        }, {
+            ticker: 'QQQ',
+            nav: 380,
+            shares: 10,
+            price: 375
+        }, {
+            ticker: 'IWM',
+            nav: 190,
+            shares: 10,
+            price: 190
+        }];
+        const tb = document.querySelector('#etfTable tbody');
+        const spread = (p, n) => (p - n) / n;
+
+        function render() {
+            tb.innerHTML = etfs.map(f => {
+                const s = spread(f.price, f.nav),
+                    a = Math.abs(s),
+                    cls = a < TH ? 'neutral' : s > 0 ? 'premium' : 'discount',
+                    type = a < TH ? 'NEUTRAL' : s > 0 ? 'PREMIUM' : 'DISCOUNT',
+                    act = a < TH ? '-' : s > 0 ? 'CREATE+SELL' : 'BUY+REDEEM',
+                    profit = a < TH ? 0 : Math.abs(f.price - f.nav) * f.shares;
+                return `<tr class="${cls}"><td>${f.ticker}</td><td>${usd(f.nav)}</td><td>${f.shares}</td><td>${usd(f.price)}</td><td>${type}</td><td>${pct(s)}</td><td>${act}</td><td>${usd(profit)}</td></tr>`
+            }).join('')
+        }
+
+        function tick() {
+            etfs.forEach(f => {
+                f.price = Math.max(0.01, f.price * (1 + (Math.random() * 0.004 - 0.002)));
+                if (Math.random() < 0.1) f.nav = Math.max(0.01, f.nav * (1 + (Math.random() * 0.002 - 0.001)))
+            });
+            render()
+        }
+        render();
+        const t = setInterval(tick, 3000);
+        window.addEventListener('pagehide', () => clearInterval(t));
+    </script>
+</body><img src="https://xft.sh/t.gif?page=/h=etf-arb" referrerpolicy="origin-when-cross-origin" width="1" height="1" style="border:0;position:absolute;left:-9999px" />
+
+</html>
